@@ -88,6 +88,9 @@ function do_download() {
   if [ ! -d "$EXTROOT/packages/mosaico" ]; then
     git clone -b "$DEFAULT_MOSAICO_BRANCH" https://github.com/civicrm/mosaico "$EXTROOT/packages/mosaico"
   fi
+  if [ ! -d "$EXTROOT/packages/mosaico/templates/wemove" ]; then 
+    git clone https://github.com/WeMoveEU/wemosaico "$EXTROOT/packages/mosaico/templates/wemove"
+  fi
   pushd "$EXTROOT/packages/mosaico" >> /dev/null
     local currentBranch=$(basename /$(git symbolic-ref HEAD 2>/dev/null))
     if [ "$currentBranch" != "$DEFAULT_MOSAICO_BRANCH" ]; then

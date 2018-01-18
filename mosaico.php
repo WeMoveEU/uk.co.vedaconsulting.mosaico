@@ -145,13 +145,13 @@ function mosaico_civicrm_navigationMenu(&$params) {
   ));
 
   _mosaico_civix_insert_navigation_menu($params, 'Mailings', array(
-    'label' => ts('New Mailing (Traditional)', array('domain' => 'uk.co.vedaconsulting.mosaico')),
-    'name' => 'traditional_mailing',
+    'label' => ts('New Mailing (Mosaico)', array('domain' => 'uk.co.vedaconsulting.mosaico')),
+    'name' => 'mosaico_mailing',
     'permission' => 'access CiviMail,create mailings',
     'child' => array(),
     'operator' => 'OR',
     'separator' => 0,
-    'url' => CRM_Utils_System::url('civicrm/a/', NULL, TRUE, '/mailing/new/traditional'),
+    'url' => CRM_Utils_System::url('civicrm/a/', NULL, TRUE, '/mailing/new/mosaico'),
   ));
 
   _mosaico_civix_navigationMenu($params);
@@ -326,7 +326,7 @@ function mosaico_civicrm_mailingTemplateTypes(&$types) {
   $types[] = array(
     'name' => 'mosaico',
     'editorUrl' => $editorUrl,
-    'weight' => -10,
+    'weight' => 10,
   );
 }
 

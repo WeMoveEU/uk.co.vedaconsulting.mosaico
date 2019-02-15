@@ -7,7 +7,7 @@
 
     // Main data is in $scope.mailing, $scope.mosaicoCtrl.template
 
-    var crmMosaicoIframe = null;
+    var crmMosaicoIframe = null, activeDialogs = {};
 
     // Hrm, would like `ng-controller="CrmMosaicoMixinCtrl as mosaicoCtrl`, but that's not working...
     $scope.mosaicoCtrl = {
@@ -78,10 +78,12 @@
 
               var model = {mailing: $scope.mailing, attachments: $scope.attachments};
               var options = CRM.utils.adjustDialogDefaults(angular.extend(
-                {autoOpen: false, title: ts('Preview/ Test'), width: 550},
+                {autoOpen: false, title: ts('Preview / Test'), width: 550},
                 options
               ));
-              var pr = dialogService.open('crmMosaicoPreviewDialog', '~/crmMosaico/PreviewDialogCtrl.html', model, options);
+              activeDialogs.crmMosaicoPreviewDialog = 1;
+              var pr = dialogService.open('crmMosaicoPreviewDialog', '~/crmMosaico/PreviewDialogCtrl.html', model, options)
+                .finally(function(){ delete activeDialogs.crmMosaicoPreviewDialog; });
               return pr;
             }
           }
@@ -98,11 +100,14 @@
         {
           autoOpen: false,
           title: ts('Advanced Settings'),
-          width: 600
+          width: 600,
+          height: 'auto'
         },
         options
       ));
-      return dialogService.open('crmMosaicoAdvancedDialog', '~/crmMosaico/AdvancedDialogCtrl.html', model, options);
+      activeDialogs.crmMosaicoAdvancedDialog = 1;
+      return dialogService.open('crmMosaicoAdvancedDialog', '~/crmMosaico/AdvancedDialogCtrl.html', model, options)
+        .finally(function(){ delete activeDialogs.crmMosaicoAdvancedDialog; });
     };
 
     crmMosaicoTemplates.whenLoaded().then(function(){
@@ -110,6 +115,9 @@
     });
 
     $scope.$on("$destroy", function() {
+      angular.forEach(activeDialogs, function(v,name){
+        dialogService.cancel(name);
+      });
       if (crmMosaicoIframe) {
         crmMosaicoIframe.destroy();
         crmMosaicoIframe = null;

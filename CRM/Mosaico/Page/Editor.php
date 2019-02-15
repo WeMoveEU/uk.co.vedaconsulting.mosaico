@@ -3,7 +3,7 @@
 class CRM_Mosaico_Page_Editor extends CRM_Core_Page {
   const DEFAULT_MODULE_WEIGHT = 200;
 
-  function run() {
+  public function run() {
     $smarty = CRM_Core_Smarty::singleton();
     $smarty->assign('baseUrl', CRM_Mosaico_Utils::getMosaicoDistUrl('relative'));
     $smarty->assign('scriptUrls', $this->getScriptUrls());
@@ -63,10 +63,11 @@ class CRM_Mosaico_Page_Editor extends CRM_Core_Page {
 
     return array(
       'imgProcessorBackend' => $this->getUrl('civicrm/mosaico/img', NULL, TRUE),
-      'emailProcessorBackend' => $this->getUrl('civicrm/mosaico/dl', NULL, FALSE),
+      'emailProcessorBackend' => 'unused-emailProcessorBackend',
       'titleToken' => 'MOSAICO Responsive Email Designer',
       'fileuploadConfig' => array(
         'url' => $this->getUrl('civicrm/mosaico/upload', NULL, FALSE),
+        'maxFileSize' => $this->getMaxFileSize(),
         // messages??
       ),
 
@@ -76,7 +77,7 @@ class CRM_Mosaico_Page_Editor extends CRM_Core_Page {
       //    It extends "tinymceConfig" and adds more plugins/buttons.
       // See also: https://www.tinymce.com/docs/configure/integration-and-setup/
       'tinymceConfig' => array(
-        'convert_urls' => false,
+        'convert_urls' => FALSE,
         'external_plugins' => array(
           'civicrmtoken' => $res->getUrl('uk.co.vedaconsulting.mosaico', 'js/tinymce-plugins/civicrmtoken/plugin.js', 1),
         ),
@@ -112,7 +113,20 @@ class CRM_Mosaico_Page_Editor extends CRM_Core_Page {
   protected function getUrl($path, $query, $frontend) {
     // This function shouldn't really exist, but it's tiring to set `$htmlize`
     // to false every.single.time we need a URL.
-    return CRM_Utils_System::url($path, $query, FALSE, NULL, FALSE, $frontend);
+    // These URLs should be absolute -- this influences the final URLs
+    // for any uploaded images, and those will need to be absolute to work
+    // correctly in all forms of composition/delivery.
+    return CRM_Utils_System::url($path, $query, TRUE, NULL, FALSE, $frontend);
+  }
+
+  /**
+   * @return int
+   */
+  protected function getMaxFileSize() {
+    $fakeUnlimited = 25 * 1024 * 1024;
+    $iniVal = ini_get('upload_max_filesize') ? CRM_Utils_Number::formatUnitSize(ini_get('upload_max_filesize'), TRUE) : $fakeUnlimited;
+    $settingVal = Civi::settings()->get('maxFileSize') ? (1024 * 1024 * Civi::settings()->get('maxFileSize')) : $fakeUnlimited;
+    return (int) min($iniVal, $settingVal);
   }
 
 }

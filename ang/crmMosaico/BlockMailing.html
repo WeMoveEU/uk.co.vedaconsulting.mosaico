@@ -61,8 +61,8 @@
   <div class="form-group">
     <label for="inputSubject" class="control-label required-mark">{{ts('Subject')}}</label>
     <div>
-      <div style="float: right;">
-        <input crm-mailing-token on-select="$broadcast('insert:subject', token.name)" tabindex="-1"/>
+      <div style="float: right;" class="token-holder">
+        <input class="form-control" crm-mailing-token on-select="$broadcast('insert:subject', token.name)" tabindex="-1"/>
       </div>
       <input
         id="inputSubject"
@@ -78,20 +78,18 @@
   </div>
 
   <span ng-controller="EditUnsubGroupCtrl">
-              <div class="form-group" ng-if="isUnsubGroupRequired(mailing)">
-                <label for="inputUnsubscribeGroup" class="control-label required-mark">{{ts('Unsubscribe Group')}}</label>
-                <select
-                    class="form-control"
-                    id="inputUnsubscribeGroup"
-                    name="baseGroup"
-                    ng-model="mailing.recipients.groups.base[0]"
-                    ng-required="true"
-                >
-                  <option ng-repeat="grp in crmMailingConst.groupNames | filter:{is_hidden:0} | orderBy:'title'"
-                          value="{{grp.id}}">{{grp.title}}</option>
-                </select>
-              </div>
-            </span>
+    <div class="form-group" ng-if="isUnsubGroupRequired(mailing)">
+      <label for="inputUnsubscribeGroup" class="control-label required-mark">{{ts('Unsubscribe Group')}}</label>
+      <input
+        crm-entityref="{entity: 'Group', api: {params: {is_hidden: 0, is_active: 1}}, select: {allowClear:true, minimumInputLength: 0}}"
+        class="form-control"
+        id="inputUnsubscribeGroup"
+        name="baseGroup"
+        ng-model="mailing.recipients.groups.base[0]"
+        ng-required="true"
+      />
+    </div>
+  </span>
 
   <div class="form-group" ng-if="crmMailingConst.isMultiLingual">
     <label for="inputLanguage" class="control-label required-mark">{{ts('Language')}}</label>

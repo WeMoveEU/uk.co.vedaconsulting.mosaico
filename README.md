@@ -1,5 +1,6 @@
 # uk.co.vedaconsulting.mosaico
-This extension integrates Mosaico a responsive email template editor, with CiviCRM.
+
+This extension integrates a responsive email template editor, [Mosaico](http://mosaico.io/), with CiviCRM.
 
  * [Initial Blog Post](https://civicrm.org/blogs/parvez/a-new-beginning-for-civimail)
  * [Beta Blog Post](https://civicrm.org/blog/deepaksrivastava/email-template-builder-civimosaico-is-now-beta)
@@ -10,48 +11,59 @@ This extension integrates Mosaico a responsive email template editor, with CiviC
 
 ## Requirements
 
- * CiviCRM v4.7.16+ / (unofficial) CiviCRM v4.6.26+ with [backports patch #9555](https://github.com/civicrm/civicrm-core/pull/9555) applied
-
- * PHP-ImageMagick
-
+* CiviCRM
+    * Recommended: `v4.7.{latest}`
+    * Unofficial: `v4.6.26+` with [backports patch #9555](https://github.com/civicrm/civicrm-core/pull/9555)
+* PHP-ImageMagick
+* [FlexMailer](https://docs.civicrm.org/flexmailer/en/latest/) `v0.2-alpha5+`
 
 ## Installation
+
 A CiviCRM extensions folder (In new sites since CiviCRM v4.7.0, this defaults to `files/civicrm/ext`. For older systems, see [the wiki](https://wiki.civicrm.org/confluence/display/CRMDOC/Extensions).)
 
-#### Option 1: CiviCRM.org Extension Directory
-This option does not require any extra server side dependency. To intall using this option, simply download the latest versions of all three extensions below and install them in order:
+#### Option 1: Download via Web
+
+The official download URLs for Mosaico and related extensions are published on the CiviCRM.org Extension Directory. Download the latest releases of these extensions:
 
 1. [`Shoreditch Theme`](https://civicrm.org/extensions/shoreditch)
 2. [`FlexMailer`](https://civicrm.org/extensions/flexmailer)
 3. [`Mosaico CiviCRM Integration`](https://civicrm.org/extensions/email-template-builder)
 
+> __TIP__: `civicrm.org` downloads are intended for normal installations, and `github.com` downloads are intended for development. Downloads on `civicrm.org` and `github.com` are *often* the same -- but not always.
 
-#### Option 2: CLI
+#### Option 2: Download via CLI
 
-This option requires command line tool [`cv`](https://github.com/civicrm/cv)
+> This option requires command line tool [`cv`](https://github.com/civicrm/cv).
+
+To download the current alpha/beta versions of Mosaico and its dependencies, run this one command:
+
+```
+cv dl --dev flexmailer shoreditch mosaico
+```
+
+Alternatively, you can download the latest nightly:
 
 ```
 cv dl --dev flexmailer shoreditch
 cv dl uk.co.vedaconsulting.mosaico@https://download.civicrm.org/extension/uk.co.vedaconsulting.mosaico/latest/uk.co.vedaconsulting.mosaico-latest.zip
 ```
 
-> Tip: If you're using v4.6.x with backports, then `cv dl` will require an
+> __TIP__: If you're using v4.6.x with backports, then `cv dl` will require an
 > extra argument: "`--filter-ver=4.7.16`".  This enables it to download the
 > latest extensions intended for v4.7.x (even if they aren't officially
 > compatible with v4.6.x).
 
-#### Option 3: Git (preferred for development)
-This option requires commad line tool [`git`](https://git-scm.com/)
+#### Option 3: Download via Git (preferred for development)
 
-other requirement by setup.sh:
+This option requires several command-line tools:
 
- * [`NodeJS`](https://nodejs.org/en)
- * [`NPM`](https://www.npmjs.com)
+ * [`git`](https://git-scm.com/)
+ * [`nodejs`](https://nodejs.org/en)
+ * [`npm`](https://www.npmjs.com)
  * [`grunt-cli`](http://gruntjs.com/getting-started)
  * [`cv`](https://github.com/civicrm/cv)
 
-
-Alternatively:
+Once these are installed, you should:
 
 ```
 ## Navigate to your extension directory, e.g.
@@ -61,11 +73,13 @@ cd sites/default/files/civicrm/ext
 git clone https://github.com/civicrm/org.civicrm.flexmailer
 git clone https://github.com/civicrm/org.civicrm.shoreditch
 git clone https://github.com/veda-consulting/uk.co.vedaconsulting.mosaico
+
+## Download additional dependencies
 cd uk.co.vedaconsulting.mosaico
 ./bin/setup.sh -D
 ```
 
-## Usage
+## Getting started (Usage)
 
 If you haven't used Mosaico before, consult the the demo and tutorial materials from http://mosaico.io/index.html.
 
@@ -73,17 +87,10 @@ To send a new mailing, simply navigate to "Mailings => New Mailing". The CiviMai
 
 Optionally, you may design reusable templates by navigating to "Mailings => Mosaico Templates".
 
-When composing a new mailing, the default layout is a simple three-step wizard.  To
-change the layout, you can update the setting `mosaico_layout` to
-`bootstrap-wizard` or `bootstrap-single`, e.g.
+When composing a new mailing with Mosaico, the screen may be configured as a three-step wizard or as a single-step form. To
+choose a layout, navigate to "Administer => CiviMail => Mosaico Settings".
 
-```
-cv api setting.create mosaico_layout=bootstrap-wizard
-```
-The traditional and Mosaico versions of the New Mailing page can be accessed with these URL's:
-- `civicrm/a/#/mailing/new/traditional` (new mailing with template_type=traditional)
-- `civicrm/a/#/mailing/new/mosaico` (new mailing with template_type=mosaico)
-- `civicrm/a/#/mailing/new` (new mailing with the default template type; depends on the mix of extensions)
+If you would like to compose mailings with the *old* CiviMail screen, navigate to "Mailings => New Mailing (Traditional)".
 
 ## Having issues with this extension?
 
@@ -137,11 +144,11 @@ See [TESTING.md](TESTING.md)
 #### Publication
 
 Whenever a change is merged or pushed to `uk.co.vedaconsulting.mosaico`, a bot automatically builds a new `zip` archive
-and publishes to [http://dist.civicrm.org/extension/uk.co.vedaconsulting.mosaico/](http://dist.civicrm.org/extension/uk.co.vedaconsulting.mosaico/).
+and publishes [uk.co.vedaconsulting.mosaico-latest.zip](https://download.civicrm.org/extension/uk.co.vedaconsulting.mosaico/latest/uk.co.vedaconsulting.mosaico-latest.zip).
 
 The build/publish process has a few properties:
  * It combines [`uk.co.vedaconsulting.mosaico`](https://github.com/veda-consulting/uk.co.vedaconsulting.mosaico),
-   [`civicrm/mosaic`](https://github.com/civicrm/mosaico), and any other runtime dependencies into one `zip` file.
+   [`civicrm/mosaico`](https://github.com/civicrm/mosaico), and any other runtime dependencies into one `zip` file.
  * The version number is determined by reading `info.xml` (`<version>`) and appending the current Unix timestamp.
    * Example: If the `version` is declared as `1.0.beta1`, then it will be published as `1.0.beta1.1478151288`.
  * Three files are published:

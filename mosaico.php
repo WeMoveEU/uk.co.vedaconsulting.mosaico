@@ -1,6 +1,7 @@
 <?php
 
 require_once 'mosaico.civix.php';
+use CRM_Mosaico_ExtensionUtil as E;
 
 /**
  * Implements hook_civicrm_config().
@@ -154,6 +155,16 @@ function mosaico_civicrm_navigationMenu(&$params) {
     'url' => CRM_Utils_System::url('civicrm/a/', NULL, TRUE, '/mailing/new/mosaico'),
   ));
 
+  _mosaico_civix_insert_navigation_menu($params, 'Administer/CiviMail', array(
+    'label' => ts('Mosaico Settings', array('domain' => 'uk.co.vedaconsulting.mosaico')),
+    'name' => 'mosaico_settings',
+    'permission' => 'administer CiviCRM',
+    'child' => array(),
+    'operator' => 'AND',
+    'separator' => 0,
+    'url' => CRM_Utils_System::url('civicrm/admin/mosaico', 'reset=1', TRUE),
+  ));
+
   _mosaico_civix_navigationMenu($params);
 }
 
@@ -164,7 +175,7 @@ function mosaico_civicrm_navigationMenu(&$params) {
  */
 function mosaico_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions) {
   if (empty($permissions['message_template']['get']) || empty($permissions['message_template']['create'])) {
-    throw new CRM_Core_Exception("Cannot define Mosaico permissio model. Core permissions for message_template are unavailable.");
+    throw new CRM_Core_Exception("Cannot define Mosaico permission model. Core permissions for message_template are unavailable.");
   }
 
   $permissions['mosaico_base_template'] = $permissions['message_template'];
@@ -182,26 +193,38 @@ function mosaico_civicrm_check(&$messages) {
       'mosaico_imagick',
       ts('the ImageMagick library is not installed.  The Email Template Builder extension will not work without it.'),
       ts('ImageMagick not installed'),
-      \Psr\Log\LogLevel::CRITICAL
+      \Psr\Log\LogLevel::CRITICAL,
+      'fa-chain-broken'
     );
   }
   if (!extension_loaded('fileinfo')) {
     $messages[] = new CRM_Utils_Check_Message('mosaico_fileinfo', ts('May experience mosaico template or thumbnail loading issues (404 errors).'), ts('PHP extension Fileinfo not loaded or enabled'));
+  }
+  if (!file_exists(E::path('packages/mosaico/dist/mosaico.min.js')) || !file_exists(E::path('packages/mosaico/dist/vendor/jquery.min.js'))) {
+    $messages[] = new CRM_Utils_Check_Message(
+      'mosaico_packages',
+      ts('Mosaico requires dependencies in its "packages" folder. Please consult the README.md for current installation instructions.'),
+      ts('Mosaico: Packages are missing'),
+      \Psr\Log\LogLevel::CRITICAL,
+      'fa-chain-broken'
+    );
   }
   if (CRM_Mailing_Info::workflowEnabled()) {
     $messages[] = new CRM_Utils_Check_Message(
       'mosaico_workflow',
       ts('CiviMail is configured to support advanced workflows. This is currently incompatible with the Mosaico mailer. Navigate to "Administer => CiviMail => CiviMail Component Settings" to disable it.'),
       ts('Advanced CiviMail workflows unsupported'),
-      \Psr\Log\LogLevel::CRITICAL
+      \Psr\Log\LogLevel::CRITICAL,
+      'fa-chain-broken'
     );
   }
   if (!CRM_Extension_System::singleton()->getMapper()->isActiveModule('shoreditch') && !CRM_Extension_System::singleton()->getMapper()->isActiveModule('bootstrapcivicrm')) {
     $messages[] = new CRM_Utils_Check_Message(
-      'mosaico_bootstrap',
-      ts('Mosaico uses Bootstrap CSS. Please install the extension "org.civicrm.shoreditch".'),
-      ts('Bootstrap required'),
-      \Psr\Log\LogLevel::CRITICAL
+      'mosaico_shoreditch',
+      ts('Mosaico is optimized to work best with BootstrapCSS and Shoreditch. Please install the extension "org.civicrm.shoreditch".'),
+      ts('Shoreditch recommended'),
+      \Psr\Log\LogLevel::NOTICE,
+      'fa-rocket'
     );
   }
   if (!CRM_Extension_System::singleton()->getMapper()->isActiveModule('flexmailer')) {
@@ -209,9 +232,28 @@ function mosaico_civicrm_check(&$messages) {
       'mosaico_flexmailer',
       ts('Mosaico uses FlexMailer for delivery. Please install the extension "org.civicrm.flexmailer".'),
       ts('FlexMailer required'),
-      \Psr\Log\LogLevel::CRITICAL
+      \Psr\Log\LogLevel::CRITICAL,
+      'fa-chain-broken'
     );
   }
+  else {
+    $RECOMMENDED_FLEXMAILER = '0.2-alpha5';
+    $fmInfo = CRM_Extension_System::singleton()->getMapper()->keyToInfo('org.civicrm.flexmailer');
+    if (version_compare($fmInfo->version, $RECOMMENDED_FLEXMAILER, '<')) {
+      $messages[] = new CRM_Utils_Check_Message(
+        'mosaico_flexmailer_ver',
+        ts('The extension %1 expects %2 version <code>%3</code> or newer. Found version <code>%4</code>.', array(
+          1 => 'Mosaico',
+          2 => 'FlexMailer',
+          3 => $RECOMMENDED_FLEXMAILER,
+          4 => $fmInfo->version,
+        )),
+        ts('Outdated dependency'),
+        \Psr\Log\LogLevel::WARNING
+      );
+    }
+  }
+
   if (!empty($mConfig['BASE_URL'])) {
     // detect incorrect image upload url. (Note: Since v4.4.4, CRM_Utils_Check_Security has installed index.html placeholder.)
     $handle = curl_init($mConfig['BASE_URL'] . '/index.html');
@@ -222,12 +264,17 @@ function mosaico_civicrm_check(&$messages) {
       $messages[] = new CRM_Utils_Check_Message('mosaico_base_url', ts('BASE_URL seems incorrect - %1. Images when uploaded, may not appear correctly as thumbnails. Make sure "Image Upload URL" is configured correctly with Administer » System Settings » Resouce URLs.', array(1 => $mConfig['BASE_URL'])), ts('Incorrect image upload url'));
     }
   }
-  $extDirName = basename(__DIR__);
-  if ($extDirName != 'uk.co.vedaconsulting.mosaico') {
+
+  $oldTplCount = CRM_Core_DAO::singleValueQuery('SELECT count(*) FROM civicrm_mosaico_msg_template');
+  if ($oldTplCount > 0) {
     $messages[] = new CRM_Utils_Check_Message(
-      'mosaico_extdirname',
-      ts("We expect extension directory name to be '%1' instead of '%2'. Images and icons may not load correctly.", array(1 => 'uk.co.vedaconsulting.mosaico', 2 => $extDirName)),
-      ts('Installed extension directory name not suitable')
+      'mosaico_migrate_1x',
+      ts('Found %1 template(s) from CiviCRM-Mosaico v1.x. Use the <a href="%2">Migration Assistant</a> to load them in v2.x.', array(
+        1 => $oldTplCount,
+        2 => CRM_Utils_System::url('civicrm/admin/mosaico/migrate', 'reset=1'),
+      )),
+      ts('Mosaico: Migrate templates (1.x => 2.x)'),
+      \Psr\Log\LogLevel::WARNING
     );
   }
 
@@ -285,6 +332,7 @@ function _mosaico_civicrm_alterMailContent(&$content) {
   $tokenAliases = array(
     // '[profile_link]' => 'FIXME',
     '[show_link]' => '{mailing.viewUrl}',
+    '[subject]' => '{mailing.subject}',
     '[unsubscribe_link]' => '{action.unsubscribeUrl}',
   );
   $content = str_replace(array_keys($tokenAliases), array_values($tokenAliases), $content);
@@ -299,7 +347,7 @@ function _mosaico_civicrm_alterMailContent(&$content) {
   $mosaico_image_upload_dir = rawurlencode($mosaico_config['BASE_URL'] . $mosaico_config['UPLOADS_URL']);
 
   $content = preg_replace_callback(
-    "/src=\"h.+img\?src=(" . $mosaico_image_upload_dir . ")(.+)&.*\"/U",
+    "/src=\".+img\?src=(" . $mosaico_image_upload_dir . ")(.+)&.*\"/U",
     function($matches){
       return "src=\"" . rawurldecode($matches[1]) . "static/" . rawurldecode($matches[2]) . "\"";
     },
@@ -315,6 +363,11 @@ function _mosaico_civicrm_alterMailContent(&$content) {
 function mosaico_civicrm_mailingTemplateTypes(&$types) {
   $messages = array();
   mosaico_civicrm_check($messages);
+  foreach (array_keys($messages) as $key) {
+    if ($messages[$key]->getLevel() <= 4) {
+      unset($messages[$key]);
+    }
+  }
 
   // v4.6 compat
   require_once 'CRM/Mosaico/Utils.php';

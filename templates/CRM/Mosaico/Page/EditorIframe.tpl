@@ -18,12 +18,18 @@
   <script type="text/javascript">
     $(function() {
       if (!Mosaico.isCompatible()) {
-        alert('Update your browser!');
+        alert('Your browser is out of date or you have incompatible plugins.  See https://civicrm.stackexchange.com/q/26118/225');
         return;
       }
 
       var plugins = [];
       var config = {/literal}{$mosaicoConfig}{literal};
+
+      window.onbeforeunload = function(e) {
+        e.preventDefault();
+        e.returnValue = "{/literal}{ts}Exit email composer without saving?{/ts}{literal}";
+      };
+
       if (window.top.crmMosaicoIframe) {
         window.top.crmMosaicoIframe(window, Mosaico, config, plugins);
       }

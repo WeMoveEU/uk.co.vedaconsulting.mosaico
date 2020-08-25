@@ -11,6 +11,12 @@ This extension defines a few new APIs:
   old v1.x templates.
 * `MosaicoTemplate.*`: This API provides access to the user-configurable templates.  It supports all standard CRUD
   actions (`get`, `create`, `delete`etc). Its data-structure closely adheres to Mosaico's canonical storage format.
+* `MosaicoTemplate.replaceurls`: When a database is restored in a server with a different URL, templates will need to be updated. The `replaceurls` method facilitates that migration task:
+
+```
+cv api MosaicoTemplate.replaceurls from_url="http://old.server.org" to_url="https://new.server.org"
+```
+
 * `MosaicoBaseTemplate.get`: This API provides access to the *base templates*. A base template (such as `versafix-1`)
   defines the HTML blocks that are available for drag/drop in the Mosaico palette. Note: This API is *read-only*.
   To define custom templates, see the section on "Base templates".
@@ -37,12 +43,12 @@ a way to *deploy* the folder, such as:
   <?php
   use CRM_Mymodule_ExtensionUtil as E;
   function mymodule_civicrm_mosaicoBaseTemplates(&$templates) {
-    $templates['foobar'] = array(
+    $templates['foobar'] = [
       'name' => 'foobar',
       'title' => 'Foo Bar',
       'path' => E::url('foobar/template-foobar.html'),
       'thumbnail' => E::url('foobar/edres/_full.png'),
-    );
+    ];
   }
   ```
 
@@ -50,3 +56,20 @@ a way to *deploy* the folder, such as:
 
 After designing a mailing, email messages are composed and delivered through FlexMailer.  To programmaticaly tap into the
 composition and delivery process, see the [FlexMailer developer docs](https://docs.civicrm.org/flexmailer/en/latest/).
+
+# Hooks
+
+See the CiviCRM documentation for more general information about [hooks](https://docs.civicrm.org/dev/en/latest/hooks/).
+
+## hook_civicrm_mosaicoConfig
+
+This hook can be implemented to modify the default mosaico WYSIWYG configuration. This is useful if you want to restrict the buttons available on the editing toolbar. The current configuration is passed in as a variable, which can then be modified.
+
+Example - remove some buttons from the toolbar, customise a configuration setting:
+```
+function example_civicrm_mosaicoConfig(&$config) {
+  $config['tinymceConfig']['forced_root_block'] = FALSE;
+  $config['tinymceConfigFull']['plugins'] = ['link paste lists code civicrmtoken'];
+  $config['tinymceConfigFull']['toolbar1'] = 'bold italic removeformat | link unlink | civicrmtoken | pastetext code';
+}
+```

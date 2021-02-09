@@ -88,6 +88,14 @@ class CRM_Mosaico_BAO_MosaicoTemplate extends CRM_Mosaico_DAO_MosaicoTemplate {
           ];
         }
       }
+
+      $records['wemove'] = [
+        'name' => 'wemove',
+        'title' => 'Wemove base',
+        'thumbnail' => CRM_Mosaico_Utils::getTemplatesUrl('absolute', 'wemove/edres/_full.png'),
+        'path' => 'templates/wemove/template-wemove.html',
+      ];
+
       // Sort the base templates into alphabetical order
       ksort($records, SORT_NATURAL | SORT_FLAG_CASE);
 
